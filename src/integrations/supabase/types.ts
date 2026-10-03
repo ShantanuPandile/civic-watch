@@ -14,7 +14,182 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      citizens: {
+        Row: {
+          created_at: string
+          credits: number
+          id: string
+          name: string
+          phone: string
+        }
+        Insert: {
+          created_at?: string
+          credits?: number
+          id?: string
+          name: string
+          phone: string
+        }
+        Update: {
+          created_at?: string
+          credits?: number
+          id?: string
+          name?: string
+          phone?: string
+        }
+        Relationships: []
+      }
+      credit_log: {
+        Row: {
+          created_at: string
+          id: string
+          points: number
+          reason: string
+          report_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          points: number
+          reason: string
+          report_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          points?: number
+          reason?: string
+          report_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_log_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "reports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_log_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "citizens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reports: {
+        Row: {
+          address: string | null
+          ai_reason: string | null
+          category: string
+          created_at: string
+          department: string | null
+          description: string
+          duplicate_count: number
+          id: string
+          latitude: number
+          longitude: number
+          parent_id: string | null
+          photo_url: string | null
+          priority_score: number
+          severity: number
+          status: string
+          tracking_id: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          address?: string | null
+          ai_reason?: string | null
+          category?: string
+          created_at?: string
+          department?: string | null
+          description: string
+          duplicate_count?: number
+          id?: string
+          latitude: number
+          longitude: number
+          parent_id?: string | null
+          photo_url?: string | null
+          priority_score?: number
+          severity?: number
+          status?: string
+          tracking_id: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          address?: string | null
+          ai_reason?: string | null
+          category?: string
+          created_at?: string
+          department?: string | null
+          description?: string
+          duplicate_count?: number
+          id?: string
+          latitude?: number
+          longitude?: number
+          parent_id?: string | null
+          photo_url?: string | null
+          priority_score?: number
+          severity?: number
+          status?: string
+          tracking_id?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reports_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "reports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reports_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "citizens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      status_history: {
+        Row: {
+          changed_at: string
+          id: string
+          note: string | null
+          report_id: string
+          status: string
+        }
+        Insert: {
+          changed_at?: string
+          id?: string
+          note?: string | null
+          report_id: string
+          status: string
+        }
+        Update: {
+          changed_at?: string
+          id?: string
+          note?: string | null
+          report_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "status_history_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
