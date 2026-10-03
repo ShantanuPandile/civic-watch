@@ -17,6 +17,8 @@ export const Route = createFileRoute("/leaderboard")({
       { name: "description", content: "Earn Civic Credits for every genuine report. See your level and the top 10 civic heroes of Nagpur." },
       { property: "og:title", content: "Civic Credits leaderboard — CivicPulse" },
       { property: "og:description", content: "Bronze, Silver, Gold Civic Hero — see who's fixing the city." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: LeaderboardPage,

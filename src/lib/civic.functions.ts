@@ -141,7 +141,7 @@ export const submitReport = createServerFn({ method: "POST" })
 // ---------- Public list ----------
 export const listReports = createServerFn({ method: "GET" }).handler(async () => {
   const sb = await db();
-  const { data, error } = await sb.from("reports").select(SELECT).is("parent_id", null).order("created_at", { ascending: false }).limit(200);
+  const { data, error } = await sb.from("reports").select(SELECT).order("created_at", { ascending: false }).limit(200);
   if (error) throw new Error(error.message);
   return withPhotos(livePriority(flatten(data ?? [])));
 });

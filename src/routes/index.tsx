@@ -73,7 +73,7 @@ function Index() {
         <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
           <div>
             <h2 className="text-2xl font-bold">City issues</h2>
-             <p className="text-sm text-muted-foreground">Public reports and citizen comments. Merged duplicates show as one issue. Sample photos are illustrative.</p>
+             <p className="text-sm text-muted-foreground">All public reports and citizen comments, including merged reports. Sample photos are illustrative.</p>
           </div>
           <div className="flex flex-wrap gap-1.5">
             {(["all", ...CATEGORIES] as const).map((c) => (
@@ -100,6 +100,7 @@ function Index() {
                 </div>
                 <p className="line-clamp-2 font-medium">{r.description}</p>
                  <p className="text-xs text-muted-foreground">Reported by {r.reporter_name ?? "Citizen"}</p>
+                 {r.parent_id && <p className="text-xs font-medium text-primary">Merged with an existing issue · follow updates</p>}
                 {r.ai_reason && <p className="line-clamp-1 text-xs text-muted-foreground">{r.ai_reason}</p>}
                 <div className="mt-auto flex items-center justify-between pt-2 text-xs text-muted-foreground">
                   <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{r.address || `${r.latitude.toFixed(3)}, ${r.longitude.toFixed(3)}`}</span>
