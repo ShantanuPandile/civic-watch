@@ -7,9 +7,10 @@ async function db() {
   return supabaseAdmin;
 }
 
-function checkAdmin(password: string) {
+function checkAdmin(id: string, password: string) {
+  const expectedId = process.env["ADMIN_ID"] || "NMC-DEMO";
   const expected = process.env["ADMIN_PASSWORD"] || "nagpur-admin";
-  if (password !== expected) throw new Error("Wrong admin password");
+  if (id.trim().toUpperCase() !== expectedId.toUpperCase() || password !== expected) throw new Error("Invalid authority ID or password");
 }
 
 async function addCredits(userId: string | null, reportId: string | null, points: number, reason: string) {
@@ -140,7 +141,7 @@ export const submitReport = createServerFn({ method: "POST" })
 // ---------- Public list ----------
 export const listReports = createServerFn({ method: "GET" }).handler(async () => {
   const sb = await db();
-  const { data, error } = await sb.from("reports").select(SELECT).is("parent_id", null).order("created_at", { ascending: false }).limit(200);
+  const { data, error } = await sb.from("reports").select(SELECT).order("created_at", { ascending: false }).limit(200);
   if (error) throw new Error(error.message);
   return withPhotos(livePriority(flatten(data ?? [])));
 });
@@ -182,13 +183,13 @@ export const getMyCredits = createServerFn({ method: "GET" })
 
 // ---------- Admin ----------
 export const adminLogin = createServerFn({ method: "POST" })
-  .inputValidator((d) => z.object({ password: z.string().max(200) }).parse(d))
-  .handler(async ({ data }) => { checkAdmin(data.password); return { ok: true }; });
+  .inputValidator((d) => z.object({ id: z.string().trim().min(1).max(80), password: z.string().max(200) }).parse(d))
+  .handler(async ({ data }) => { checkAdmin(data.id, data.password); return { ok: true }; });
 
 export const adminListReports = createServerFn({ method: "POST" })
-  .inputValidator((d) => z.object({ password: z.string().max(200) }).parse(d))
+  .inputValidator((d) => z.object({ id: z.string().trim().min(1).max(80), password: z.string().max(200) }).parse(d))
   .handler(async ({ data }) => {
-    checkAdmin(data.password);
+    checkAdmin(data.id, data.password);
     const sb = await db();
     const { data: rows, error } = await sb.from("reports").select(SELECT).is("parent_id", null).limit(500);
     if (error) throw new Error(error.message);
@@ -199,6 +200,7 @@ export const adminListReports = createServerFn({ method: "POST" })
 export const adminUpdateStatus = createServerFn({ method: "POST" })
   .inputValidator((d) =>
     z.object({
+      authorityId: z.string().trim().min(1).max(80),
       password: z.string().max(200),
       id: z.string().uuid(),
       status: z.enum(STATUSES),
@@ -206,7 +208,7 @@ export const adminUpdateStatus = createServerFn({ method: "POST" })
     }).parse(d),
   )
   .handler(async ({ data }) => {
-    checkAdmin(data.password);
+    checkAdmin(data.authorityId, data.password);
     const sb = await db();
     const { data: rep } = await sb.from("reports").select("*").eq("id", data.id).single();
     if (!rep) throw new Error("Report not found");

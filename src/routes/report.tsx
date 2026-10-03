@@ -19,6 +19,8 @@ export const Route = createFileRoute("/report")({
       { name: "description", content: "Report a pothole, streetlight or garbage problem with photo and GPS location in English, Hindi or Marathi." },
       { property: "og:title", content: "Report a civic issue — CivicPulse" },
       { property: "og:description", content: "Pin the spot, add a photo, and AI sorts your complaint instantly." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: ReportPage,

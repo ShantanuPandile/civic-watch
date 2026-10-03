@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { isSamplePhoto, reportPhoto } from "@/lib/report-photos";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
@@ -21,49 +22,65 @@ export const Route = createFileRoute("/admin")({
       { name: "description", content: "Priority-sorted civic issues for city departments: verify, assign, resolve and close complaints." },
       { property: "og:title", content: "Authority dashboard — CivicPulse" },
       { property: "og:description", content: "Manage and close civic issues by priority." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { name: "robots", content: "noindex" },
     ],
   }),
   component: AdminPage,
 });
 
-const KEY = "civic-admin-pw";
+const KEY = "civic-authority-session";
+type AuthorityCredentials = { id: string; password: string };
 
 function AdminPage() {
-  const [pw, setPw] = useState<string | null>(null);
-  useEffect(() => setPw(sessionStorage.getItem(KEY)), []);
-  if (!pw) return <Login onOk={(p) => { sessionStorage.setItem(KEY, p); setPw(p); }} />;
-  return <Dashboard pw={pw} onLogout={() => { sessionStorage.removeItem(KEY); setPw(null); }} />;
+  const [credentials, setCredentials] = useState<AuthorityCredentials | null>(null);
+  useEffect(() => {
+    try {
+      const saved = sessionStorage.getItem(KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (typeof parsed.id === "string" && typeof parsed.password === "string") setCredentials(parsed);
+      }
+    } catch { sessionStorage.removeItem(KEY); }
+  }, []);
+  if (!credentials) return <Login onOk={(value) => { sessionStorage.setItem(KEY, JSON.stringify(value)); setCredentials(value); }} />;
+  return <Dashboard credentials={credentials} onLogout={() => { sessionStorage.removeItem(KEY); setCredentials(null); }} />;
 }
 
-function Login({ onOk }: { onOk: (p: string) => void }) {
+function Login({ onOk }: { onOk: (credentials: AuthorityCredentials) => void }) {
   const login = useServerFn(adminLogin);
+  const [id, setId] = useState("");
   const [p, setP] = useState("");
   const [busy, setBusy] = useState(false);
   return (
     <main className="mx-auto max-w-sm px-4 py-20">
       <form
-        className="rounded-2xl border bg-card p-6 shadow-card"
+        className="rounded-md border bg-card p-6 shadow-card"
         onSubmit={async (e) => {
           e.preventDefault(); setBusy(true);
-          try { await login({ data: { password: p } }); onOk(p); } catch { toast.error("Wrong password"); } finally { setBusy(false); }
+          try { await login({ data: { id, password: p } }); onOk({ id, password: p }); } catch { toast.error("Invalid authority ID or password"); } finally { setBusy(false); }
         }}
       >
         <Lock className="h-8 w-8 text-primary" />
-        <h1 className="mt-3 text-2xl font-bold">Authority login</h1>
-        <p className="mt-1 text-sm text-muted-foreground">For municipal staff only.</p>
-        <Input type="password" className="mt-4" value={p} onChange={(e) => setP(e.target.value)} placeholder="Admin password" />
+        <h1 className="mt-3 text-2xl font-bold">NMC authority desk</h1>
+        <p className="mt-1 text-sm text-muted-foreground">Municipal staff demo access.</p>
+        <label htmlFor="authority-id" className="mt-5 block text-sm font-medium">Authority ID</label>
+        <Input id="authority-id" autoComplete="username" required className="mt-1" value={id} onChange={(e) => setId(e.target.value)} placeholder="Enter authority ID" />
+        <label htmlFor="authority-password" className="mt-4 block text-sm font-medium">Password</label>
+        <Input id="authority-password" type="password" autoComplete="current-password" required className="mt-1" value={p} onChange={(e) => setP(e.target.value)} placeholder="Enter password" />
         <Button className="mt-3 w-full" disabled={busy}>Sign in</Button>
+        <p className="mt-4 text-xs text-muted-foreground">Demo only · ID: NMC-DEMO · Password: nagpur-admin</p>
       </form>
     </main>
   );
 }
 
-function Dashboard({ pw, onLogout }: { pw: string; onLogout: () => void }) {
+function Dashboard({ credentials, onLogout }: { credentials: AuthorityCredentials; onLogout: () => void }) {
   const list = useServerFn(adminListReports);
   const update = useServerFn(adminUpdateStatus);
   const qc = useQueryClient();
-  const { data = [], isLoading } = useQuery({ queryKey: ["admin", pw], queryFn: () => list({ data: { password: pw } }), refetchInterval: 10000 });
+  const { data = [], isLoading } = useQuery({ queryKey: ["admin", credentials.id], queryFn: () => list({ data: credentials }), refetchInterval: 10000 });
   const [cat, setCat] = useState<string>("all");
   const [status, setStatus] = useState<string>("open");
   const [editing, setEditing] = useState<{ r: ReportRow; to: Status } | null>(null);
@@ -85,7 +102,7 @@ function Dashboard({ pw, onLogout }: { pw: string; onLogout: () => void }) {
   async function apply() {
     if (!editing) return;
     try {
-      await update({ data: { password: pw, id: editing.r.id, status: editing.to, note: note || undefined } });
+      await update({ data: { authorityId: credentials.id, password: credentials.password, id: editing.r.id, status: editing.to, note: note || undefined } });
       toast.success(`${editing.r.tracking_id} → ${editing.to}`);
       setEditing(null); setNote("");
       qc.invalidateQueries({ queryKey: ["admin"] });
@@ -96,7 +113,7 @@ function Dashboard({ pw, onLogout }: { pw: string; onLogout: () => void }) {
     <main className="mx-auto max-w-7xl px-4 py-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold">Authority dashboard</h1>
+          <h1 className="text-3xl font-bold">NMC authority desk</h1>
           <p className="text-sm text-muted-foreground">Sorted by priority = severity×10 + duplicates×5 + days open×2</p>
         </div>
         <Button variant="outline" onClick={onLogout}><LogOut /> Log out</Button>
@@ -143,7 +160,7 @@ function Dashboard({ pw, onLogout }: { pw: string; onLogout: () => void }) {
                   <div className="flex items-center gap-2"><span className="font-mono text-xs font-semibold text-primary">{r.tracking_id}</span><CategoryChip category={r.category} />{r.duplicate_count > 0 && <span className="flex items-center gap-0.5 text-xs font-semibold"><Layers className="h-3 w-3" />+{r.duplicate_count}</span>}</div>
                   <div className="mt-1 font-medium">{r.description}</div>
                   <div className="text-xs text-muted-foreground">{r.address ?? ""} · {timeAgo(r.created_at)} · by {r.reporter_name ?? "—"}</div>
-                  {r.photo_url && <a href={r.photo_url} target="_blank" rel="noreferrer" className="text-xs text-primary underline">View photo</a>}
+                  {reportPhoto(r.tracking_id, r.photo_url) && <div className="mt-2 flex items-center gap-2"><img src={reportPhoto(r.tracking_id, r.photo_url) ?? ""} alt={`Issue at ${r.address ?? "Nagpur"}`} width={1024} height={768} className="h-16 w-20 rounded object-cover" />{isSamplePhoto(r.tracking_id, r.photo_url) && <span className="text-xs text-muted-foreground">Illustrative demo photo</span>}</div>}
                 </td>
                 <td className="p-3">{r.department}</td>
                 <td className="p-3"><SeverityDots value={r.severity} /></td>
