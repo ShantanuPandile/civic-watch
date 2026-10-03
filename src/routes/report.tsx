@@ -36,7 +36,7 @@ function ReportPage() {
   const [result, setResult] = useState<Result | null>(null);
 
   function useGps() {
-    if (!navigator.geolocation) return toast.error("GPS not available on this device");
+    if (!navigator.geolocation) { toast.error("GPS not available on this device"); return; }
     setLocating(true);
     navigator.geolocation.getCurrentPosition(
       (p) => { setPos({ lat: p.coords.latitude, lng: p.coords.longitude }); setLocating(false); },
@@ -47,7 +47,7 @@ function ReportPage() {
 
   function onPhoto(f?: File) {
     if (!f) return;
-    if (f.size > 2 * 1024 * 1024) return toast.error("Photo must be under 2 MB");
+    if (f.size > 2 * 1024 * 1024) { toast.error("Photo must be under 2 MB"); return; }
     const r = new FileReader();
     r.onload = () => setPhoto(r.result as string);
     r.readAsDataURL(f);
@@ -55,7 +55,7 @@ function ReportPage() {
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!pos) return toast.error("Pick the location using GPS or by tapping the map");
+    if (!pos) { toast.error("Pick the location using GPS or by tapping the map"); return; }
     setBusy(true);
     try {
       const res = await submit({ data: { ...form, address: form.address || undefined, latitude: pos.lat, longitude: pos.lng, photo: photo ?? undefined } });

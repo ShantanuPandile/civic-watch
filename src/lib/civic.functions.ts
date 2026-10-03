@@ -73,11 +73,12 @@ export const submitReport = createServerFn({ method: "POST" })
     let photo_path: string | null = null;
     if (data.photo) {
       const m = data.photo.match(/^data:(image\/[a-z]+);base64,(.+)$/);
-      if (m) {
+      if (m && m[1] && m[2]) {
+        const mime = m[1];
         const bytes = Buffer.from(m[2], "base64");
         if (bytes.length > 2 * 1024 * 1024) throw new Error("Photo must be under 2 MB");
-        photo_path = `${tracking_id}.${m[1].split("/")[1]}`;
-        const up = await sb.storage.from("report-photos").upload(photo_path, bytes, { contentType: m[1] });
+        photo_path = `${tracking_id}.${mime.split("/")[1]}`;
+        const up = await sb.storage.from("report-photos").upload(photo_path, bytes, { contentType: mime });
         if (up.error) photo_path = null;
       }
     }
@@ -151,11 +152,11 @@ export const trackReport = createServerFn({ method: "GET" })
     const sb = await db();
     const { data: rep } = await sb.from("reports").select(SELECT).eq("tracking_id", data.tracking_id.toUpperCase()).maybeSingle();
     if (!rep) return null;
-    let main = flatten([rep])[0];
+    let main = flatten([rep])[0]!;
     let mergedInto: string | null = null;
     if (main.parent_id) {
       const { data: parent } = await sb.from("reports").select(SELECT).eq("id", main.parent_id).single();
-      if (parent) { mergedInto = parent.tracking_id; main = flatten([parent])[0]; }
+      if (parent) { mergedInto = parent.tracking_id; main = flatten([parent])[0]!; }
     }
     const { data: history } = await sb.from("status_history").select("*").eq("report_id", main.id).order("changed_at");
     const [withPhoto] = await withPhotos(livePriority([main]));
