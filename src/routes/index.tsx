@@ -8,6 +8,7 @@ import { CATEGORIES, CATEGORY_LABEL, OPEN_STATUSES, type Category } from "@/lib/
 import { CivicMap } from "@/components/CivicMap";
 import { CategoryChip, SeverityDots, StatusBadge, STATUS_PIN, timeAgo } from "@/components/civic-ui";
 import { Button } from "@/components/ui/button";
+import { isSamplePhoto, reportPhoto } from "@/lib/report-photos";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -15,7 +16,9 @@ export const Route = createFileRoute("/")({
       { title: "CivicPulse — Report & track city issues in Nagpur" },
       { name: "description", content: "Report potholes, broken streetlights and garbage. AI sorts and prioritises every complaint, merges duplicates and tracks it until fixed." },
       { property: "og:title", content: "CivicPulse — Report & track city issues" },
-      { property: "og:description", content: "AI-sorted civic complaints with live status tracking and an authority dashboard." },
+      { property: "og:description", content: "Public Nagpur civic reports with photos, comments and status tracking." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: Index,
@@ -42,9 +45,9 @@ function Index() {
         <div className="absolute inset-0 grid-lines" />
         <div className="relative mx-auto grid max-w-6xl gap-10 px-4 py-14 md:grid-cols-[1.2fr_1fr] md:py-20">
           <div>
-            <span className="inline-flex items-center gap-2 rounded-full bg-accent/20 px-3 py-1 text-xs font-semibold text-accent">● Live for Nagpur</span>
-            <h1 className="mt-4 text-4xl font-extrabold leading-[1.05] md:text-6xl">No complaint gets lost again.</h1>
-            <p className="mt-4 max-w-lg text-lg opacity-80">Snap a pothole, a dead streetlight or a garbage pile. AI sorts it, merges duplicates and pushes the worst problems to the top until they're fixed.</p>
+             <span className="inline-flex items-center gap-2 rounded-full bg-accent/20 px-3 py-1 text-xs font-semibold text-accent">● Nagpur civic service demo · NMC-inspired</span>
+             <h1 className="mt-4 text-4xl font-extrabold leading-[1.05] md:text-6xl">CivicPulse Nagpur</h1>
+             <p className="mt-4 max-w-lg text-lg opacity-80">See the city's reported problems, add a photo and location to your complaint, and follow its progress from report to resolution.</p>
             <div className="mt-7 flex flex-wrap gap-3">
               <Button asChild size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90"><Link to="/report">Report an issue <ArrowRight /></Link></Button>
               <Button asChild size="lg" variant="outline" className="border-ink-foreground/30 bg-transparent text-ink-foreground hover:bg-ink-foreground/10 hover:text-ink-foreground"><Link to="/track"><Search /> Track my report</Link></Button>
@@ -70,13 +73,13 @@ function Index() {
         <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
           <div>
             <h2 className="text-2xl font-bold">City issues</h2>
-            <p className="text-sm text-muted-foreground">Every report, sorted by AI. Merged duplicates show as one issue.</p>
+             <p className="text-sm text-muted-foreground">Public reports and citizen comments. Merged duplicates show as one issue. Sample photos are illustrative.</p>
           </div>
           <div className="flex flex-wrap gap-1.5">
             {(["all", ...CATEGORIES] as const).map((c) => (
-              <button key={c} onClick={() => setCat(c)} className={`rounded-full border px-3 py-1 text-sm font-medium ${cat === c ? "border-primary bg-primary text-primary-foreground" : "bg-card hover:bg-muted"}`}>
+               <Button key={c} size="sm" variant={cat === c ? "default" : "outline"} onClick={() => setCat(c)} className="rounded-full">
                 {c === "all" ? "All" : CATEGORY_LABEL[c]}
-              </button>
+               </Button>
             ))}
           </div>
         </div>
@@ -89,13 +92,14 @@ function Index() {
           {isLoading && Array.from({ length: 6 }).map((_, i) => <div key={i} className="h-40 animate-pulse rounded-xl bg-muted" />)}
           {filtered.map((r) => (
             <Link key={r.id} to="/track" search={{ id: r.tracking_id }} className="group flex flex-col overflow-hidden rounded-xl border bg-card shadow-card transition hover:-translate-y-0.5 hover:border-primary/40">
-              {r.photo_url && <img src={r.photo_url} alt="" className="h-36 w-full object-cover" loading="lazy" />}
+               {reportPhoto(r.tracking_id, r.photo_url) && <div className="relative"><img src={reportPhoto(r.tracking_id, r.photo_url) ?? ""} alt={`Issue reported near ${r.address ?? "Nagpur"}`} width={1024} height={768} className="h-44 w-full object-cover" loading="lazy" />{isSamplePhoto(r.tracking_id, r.photo_url) && <span className="absolute bottom-2 left-2 rounded bg-card/90 px-2 py-1 text-[10px] font-semibold text-foreground">Illustrative demo photo</span>}</div>}
               <div className="flex flex-1 flex-col gap-2 p-4">
                 <div className="flex items-center justify-between gap-2">
                   <CategoryChip category={r.category} />
                   <StatusBadge status={r.status} />
                 </div>
                 <p className="line-clamp-2 font-medium">{r.description}</p>
+                 <p className="text-xs text-muted-foreground">Reported by {r.reporter_name ?? "Citizen"}</p>
                 {r.ai_reason && <p className="line-clamp-1 text-xs text-muted-foreground">{r.ai_reason}</p>}
                 <div className="mt-auto flex items-center justify-between pt-2 text-xs text-muted-foreground">
                   <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{r.address || `${r.latitude.toFixed(3)}, ${r.longitude.toFixed(3)}`}</span>

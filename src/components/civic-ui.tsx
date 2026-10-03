@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Megaphone } from "lucide-react";
+import nmcLogo from "@/assets/nmc-logo-concept-a.png";
 import { CATEGORY_LABEL, type Category, type Status } from "@/lib/civic";
 import { cn } from "@/lib/utils";
 
@@ -51,18 +51,18 @@ const NAV = [
   { to: "/report", label: "Report" },
   { to: "/track", label: "Track" },
   { to: "/leaderboard", label: "Credits" },
-  { to: "/admin", label: "Authority" },
+  { to: "/admin", label: "NMC desk" },
 ] as const;
 
 export function SiteHeader() {
   return (
-    <header className="sticky top-0 z-30 border-b bg-card/90 backdrop-blur">
-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
-        <Link to="/" className="flex items-center gap-2 font-display text-lg font-bold text-foreground">
-          <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary text-primary-foreground"><Megaphone className="h-4 w-4" /></span>
-          <span className="hidden sm:inline">CivicPulse</span>
+    <header className="sticky top-0 z-30 border-b bg-card/95 backdrop-blur">
+      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-2 sm:flex-nowrap sm:py-3">
+        <Link to="/" className="flex shrink-0 items-center gap-2.5 text-foreground">
+          <img src={nmcLogo} alt="CivicPulse city hall logo" width={48} height={48} className="h-10 w-10 object-contain" />
+          <span className="flex flex-col leading-tight"><span className="font-display text-base font-bold sm:text-lg">CivicPulse <span className="text-primary">Nagpur</span></span><span className="text-[10px] font-semibold uppercase text-muted-foreground sm:text-xs">NMC-inspired civic reporting · demo</span></span>
         </Link>
-        <nav className="flex items-center gap-1 overflow-x-auto text-sm">
+        <nav className="flex w-full items-center gap-1 overflow-x-auto text-sm sm:w-auto">
           {NAV.map((n) => (
             <Link key={n.to} to={n.to} activeOptions={{ exact: true }} className="rounded-md px-3 py-1.5 font-medium text-muted-foreground hover:bg-muted hover:text-foreground" activeProps={{ className: "bg-secondary text-primary" }}>
               {n.label}

@@ -11,6 +11,7 @@ import { CategoryChip, SeverityDots, StatusBadge, STATUS_PIN } from "@/component
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { reportPhoto, isSamplePhoto } from "@/lib/report-photos";
 
 export const Route = createFileRoute("/track")({
   validateSearch: z.object({ id: z.string().optional() }),
@@ -20,6 +21,8 @@ export const Route = createFileRoute("/track")({
       { name: "description", content: "Enter your tracking ID to see live status updates and the full timeline of your civic complaint." },
       { property: "og:title", content: "Track your report — CivicPulse" },
       { property: "og:description", content: "Live status timeline for every civic complaint." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: TrackPage,
@@ -107,7 +110,7 @@ function TrackPage() {
               </ol>
             </div>
             <div className="space-y-4">
-              {r.photo_url && <img src={r.photo_url} alt="Reported issue" className="h-48 w-full rounded-2xl object-cover" />}
+              {reportPhoto(r.tracking_id, r.photo_url) && <figure><img src={reportPhoto(r.tracking_id, r.photo_url) ?? ""} alt={`Reported issue near ${r.address ?? "Nagpur"}`} width={1024} height={768} className="h-48 w-full rounded-md object-cover" />{isSamplePhoto(r.tracking_id, r.photo_url) && <figcaption className="mt-1 text-xs text-muted-foreground">Illustrative demo photo</figcaption>}</figure>}
               <div className="overflow-hidden rounded-2xl border">
                 <CivicMap key={r.id} picked={null} markers={[{ id: r.id, lat: r.latitude, lng: r.longitude, color: STATUS_PIN[r.status] }]} className="h-56" zoom={15} />
               </div>
